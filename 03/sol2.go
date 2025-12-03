@@ -20,6 +20,17 @@ import (
 //	return index, int(max - '0')
 //}
 
+// not sure that doing this conversion is faster, equal or slower than
+// index calculation in previous commit but I wanted to try to use
+// slice len and cap to my advantage in this logic so I needed a well
+// sized slice, which scanner.Text() does not do because of buffering
+// I got a rune slice with larger cap, messing up my logic
+func convert_to_rune_with_cap(s string) []rune {
+	res := make([]rune, len(s))
+	copy(res, []rune(s))
+	return res
+}
+
 func Sol2() {
 	filename := os.Args[1]
 	count := 0
@@ -32,15 +43,15 @@ func Sol2() {
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		line := []rune(scanner.Text())
+		line := convert_to_rune_with_cap(scanner.Text())
 		index := 0
-		res := 0
+		m := 0
 		for i := 11; i >= 0; i-- {
-			new_index, m := max(line[index : len(line)-i])
-			res += m * int(math.Pow10(i))
-			index += new_index + 1
+			line = line[index : cap(line)-i]
+			index, m = max(line)
+			count += m * int(math.Pow10(i))
+			index++
 		}
-		count += res
 	}
 
 	fmt.Println(count)
