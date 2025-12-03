@@ -31,6 +31,19 @@ func convert_to_rune_with_cap(s string) []rune {
 	return res
 }
 
+func compute_joltage(line []rune, c chan int) {
+	index := 0
+	m := 0
+	res := 0
+	for i := 11; i >= 0; i-- {
+		line = line[index : cap(line)-i]
+		index, m = max(line)
+		res += m * int(math.Pow10(i))
+		index++
+	}
+	c <- res
+}
+
 func Sol2() {
 	filename := os.Args[1]
 	count := 0
@@ -42,16 +55,16 @@ func Sol2() {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
+	nb_line := 0
+	c := make(chan int)
 	for scanner.Scan() {
 		line := convert_to_rune_with_cap(scanner.Text())
-		index := 0
-		m := 0
-		for i := 11; i >= 0; i-- {
-			line = line[index : cap(line)-i]
-			index, m = max(line)
-			count += m * int(math.Pow10(i))
-			index++
-		}
+		nb_line++
+		go compute_joltage(line, c)
+	}
+
+	for i := 0; i < nb_line; i++ {
+		count += <-c
 	}
 
 	fmt.Println(count)
